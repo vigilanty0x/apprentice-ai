@@ -335,7 +335,10 @@ class LocalStatePermissionTests(unittest.TestCase):
                 os.symlink(target, link, target_is_directory=True)
             except (OSError, NotImplementedError):
                 self.skipTest("symlinks unavailable")
-            with mock.patch("apprentice_ai.localfs.os.fchmod") as change_mode:
+            # Python 3.11 on Windows does not expose os.fchmod.  The test still
+            # exercises the cross-platform pre-open symlink guard, so install a
+            # harmless mock attribute when the platform does not provide one.
+            with mock.patch("apprentice_ai.localfs.os.fchmod", create=True) as change_mode:
                 with self.assertRaisesRegex(ValidationError, "non-symlink"):
                     secure_directory(link)
                 change_mode.assert_not_called()
